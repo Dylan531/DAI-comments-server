@@ -1,0 +1,64 @@
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>test</title>
+        <meta content="Reflecting on The ONE Thing: The Surprisingly Simple Truth About Extraordinary Results" property="og:title">
+        <meta content="article" property="og:type">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+        <style>
+            .comment-container {
+              margin-top: 20px;
+              padding: 10px;
+              border: 1px solid #e2e2e2;
+              border-radius: 5px;
+            }
+            .comment-header {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            .comment-body {
+              font-size: 14px;
+              margin-bottom: 10px;
+            }
+            .comment-footer {
+              font-size: 12px;
+              color: #828282;
+            }
+          </style>
+    </head>
+    <body>
+        <button id="get-users-button">Get All Users</button>
+        <div class="container">
+          <h2>Leave a Comment</h2>
+          <form>
+            <div class="input-field">
+              <input id="name" type="text" class="validate" value="John"/>
+              <label for="name">Name</label>
+            </div>
+            <div class="input-field">
+              <input id="email" type="email" class="validate" value="John@doe.com"/>
+              <label for="email">Email</label>
+            </div>
+            <div class="input-field">
+              <textarea id="comment" class="materialize-textarea" value="John"></textarea>
+              <label for="comment">Comment</label>
+            </div>
+            <button id="postButton" type="button" class="btn waves-effect waves-light" name="action">
+              <i class="material-icons right">Send</i>
+            </button>
+          </form>
+        </div>
+        <div id="comments"></div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script type="module" src="jquery-3.6.4.min.js"></script>
+        <script type="module" src="testclient.js"></script>
+      </body>
+    <!--
+    <body>
+        <p id="addbutton">larry</p>
+        <button id="get-users-button">Get All Users</button>
+    </body>
+    -->
+    
+</html>
