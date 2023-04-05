@@ -3,9 +3,7 @@ import './jquery-3.6.4.min.js'
 const postButton = document.getElementById('postButton');
 const getUsersButton = document.getElementById('get-users-button');
 
-
-$(function() {
-
+const getComments = () => {
   // Get the title of the article
   const title = $('meta[property="og:title"]').attr('content');
   
@@ -32,47 +30,49 @@ $(function() {
   .catch(error => {
     console.error(error);
   });
+}
+
+
+postButton.addEventListener('click', (event) => {
+  const title = $('meta[property="og:title"]').attr("content");
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const comment = document.getElementById("comment").value;
   
+  const result = JSON.stringify({ "title":title, "name":name, "email":email, "comment":comment });
+
+  event.preventDefault();
   
-});
-
-
-
-postButton.addEventListener('click', async () => {
-  const title = $('meta[property="og:title"]').attr('content');
-  const name = document.getElementById('name').value;
-  const email = document.getElementById('email').value;
-  const comment = document.getElementById('comment').value;
-  
-
-  await fetch('http://localhost:3000/comments', {
+  fetch('http://localhost:3000/comments', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json; charset=UTF-8'
     },
-    body: JSON.stringify({ title, name, email, comment })
+    body: result
   })
-  .then(response => response.json())
-  .then(response => {
-    if (response.ok) {
-      console.log(response);
+  .then(res => {
+    if (!res.ok) {
+      return res.text().then(text => { throw new Error(text) })
     } else {
-      console.log(response);
-      console.error('Failed to post comment!');
+      alert(res);
     }
+  })
+  .catch(err => {
+    alert(err);
+  });
+});
+
+getUsersButton.addEventListener('click', () => {
+  fetch('http://localhost:3000/users', {method: 'GET'},)
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
   })
   .catch(error => {
     console.error(error);
   });
 });
 
-getUsersButton.addEventListener('click', () => {
-    fetch('http://localhost:3000/users', {method: 'GET'},)
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-      })
-      .catch(error => {
-        console.error(error);
-      });
-  });
+$(function() {
+  getComments();
+});

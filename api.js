@@ -7,6 +7,7 @@ const { check, body, validationResult } = require('express-validator');
 
 // create express instance and set port
 const port = 3000;
+const DOMAIN_NAME = 'localhost';
 const app = express();
 app.use(bodyParser.json());
 
@@ -88,7 +89,6 @@ app.get('/users', (req, res) => {
 // Check if the username is already in the database, if it is, ensure the uid matches the name+email.
 // If it is not, add the user to the database. If the user is already in the database and the uid doesn't match, throw an error.
 app.post('/comments', commentValidationRules(), validate, (req, res) => {
-  console.log("Comment added successfully");
   const { title, name, email, comment } = req.body;
   const UID = crypto.createHash('md5').update(name + email).digest('hex');
 
@@ -104,6 +104,7 @@ app.post('/comments', commentValidationRules(), validate, (req, res) => {
           console.error(err.message);
         } // if the UID matches, add the comment
         else if (row.result === 1) {
+          // create a new PRNG string for the user to be able to delete their comment
           const randomString = crypto.randomBytes(16).toString('hex');
           db.run("INSERT INTO comments (DELETION_UID, date, title, name, comment) VALUES (?, strftime('%Y-%m-%d %H:%M:%S CST'), ?, ?, ?)", 
                 [randomString, title, name, comment], function(err) {
@@ -111,16 +112,18 @@ app.post('/comments', commentValidationRules(), validate, (req, res) => {
               console.error(err.message);
             } else {
               console.log("Comment added successfully");
-              res.send(200);
+              res.send('You may delete your comment by navigating to: ' + DOMAIN_NAME + '/comments?' + randomString);
             }
           });
         } // username already exists, but UID doesn't match, "authentication" failed!
         else {
-          res.status(400).send('Please choose a different username, or use the correct email address');
+          // Send JSON error message
+          res.send('Please choose a different username, or use the correct email address');
         }
       });
     } // username doesn't exist so we need to add it and the comment to the database
     else {
+      // create a new PRNG string for the user to be able to delete their comment
       const randomString = crypto.randomBytes(16).toString('hex');
       db.run("INSERT INTO users (UID, name, email) VALUES (?, ?, ?)", [UID, name, email], function(err) {
         if (err) {
@@ -133,7 +136,8 @@ app.post('/comments', commentValidationRules(), validate, (req, res) => {
           console.error(err.message);
         }
       });
-      res.send('User and comment added successfully to the database');
+      console.log("Comment added successfully2");
+      res.send('You may delete your comment by navigating to: ' + DOMAIN_NAME + '/comments?' + randomString);
     }
   });
 })
