@@ -1,7 +1,9 @@
 import './jquery-3.6.4.min.js'
 
+
 const postButton = document.getElementById('postButton');
 const getUsersButton = document.getElementById('get-users-button');
+
 
 const getComments = () => {
   // Get the title of the article
@@ -33,15 +35,13 @@ const getComments = () => {
 }
 
 
-postButton.addEventListener('click', (event) => {
+postButton.addEventListener('click', () => {
   const title = $('meta[property="og:title"]').attr("content");
   const name = document.getElementById("name").value;
   const email = document.getElementById("email").value;
   const comment = document.getElementById("comment").value;
   
   const result = JSON.stringify({ "title":title, "name":name, "email":email, "comment":comment });
-
-  event.preventDefault();
   
   fetch('http://localhost:3000/comments', {
     method: 'POST',
@@ -54,7 +54,7 @@ postButton.addEventListener('click', (event) => {
     if (!res.ok) {
       return res.text().then(text => { throw new Error(text) })
     } else {
-      alert(res);
+      return res.text().then(text => { alert(text) })
     }
   })
   .catch(err => {
