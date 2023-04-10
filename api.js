@@ -3,6 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const crypto = require('crypto');
+const { rateLimiter }= require('./rateLimiter');
 const { check, body, validationResult } = require('express-validator');
 
 // create express instance and set port
@@ -13,6 +14,9 @@ app.use(bodyParser.json());
 
 // For test uses only. Not for prod.
 app.use(cors({origin: '*'}));
+
+// Set up rate limiting for flood protection
+app.use(rateLimiter);
 
 // Create a new SQLite database
 const db = new sqlite3.Database('commentsv1.db');
@@ -43,9 +47,9 @@ const commentValidationRules = () => {
 }
 
 // Define the validation rules template for titles (being extra safe here, theoretically these should never change)
-const titleValidationRules = () => {
+const textValidationRules = () => {
   return [
-    check('title').escape()
+    check('text').escape()
   ]
 }
 
@@ -64,13 +68,27 @@ const validate = (req, res, next) => {
 }
 
 // Get all comments using the title parameter to filter the database
-app.get('/comments', titleValidationRules(), validate, (req, res) => {
+app.get('/comments', textValidationRules(), validate, (req, res) => {
   const title = req.query.title;
   db.all('SELECT * FROM comments WHERE title = ?', [title], (err, rows) => {
     if (err) {
       res.status(500).send(err);
     } else {
       res.send(rows);
+    }
+  });
+})
+
+// Delete comment with given UID using the deletion_uid parameter to filter the database
+app.get('/delete', textValidationRules(), validate, (req, res) => {
+  const UID = req.query.UID;
+  console.log(UID);
+  // make the query to delete the comment from the database
+  db.run(`DELETE FROM comments WHERE deletion_uid = ?`, [UID], (err) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.send(200);
     }
   });
 })
@@ -127,14 +145,13 @@ const postComment = (req, res) => {
   // Generate a hash for a one-time use deletion code
   const randomString = crypto.randomBytes(16).toString('hex');
   const { title, name, comment } = req.body;
-
-  db.run("INSERT INTO comments (DELETION_UID, date, title, name, comment) VALUES (?, strftime('%Y-%m-%d %H:%M:%S CST'), ?, ?, ?)", 
+  db.run("INSERT INTO comments (DELETION_UID, date, title, name, comment) VALUES (?, strftime('%Y-%m-%d %H:%M:%S'), ?, ?, ?)", 
             [randomString, title, name, comment], function(err) {
         if (err) {
           console.error(err.message);
         }
   });
-  res.send('You may delete your comment by navigating to: ' + DOMAIN_NAME + '/comments?' + randomString);
+  res.send('You may delete your comment by navigating to: ' + DOMAIN_NAME + '/delete?UID=' + randomString);
   console.log("Comment added successfully");
 }
 
