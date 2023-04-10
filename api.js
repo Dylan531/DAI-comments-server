@@ -8,7 +8,7 @@ const { check, body, validationResult } = require('express-validator');
 
 // create express instance and set port
 const port = 3000;
-const DOMAIN_NAME = 'http://localhost';
+const DOMAIN_NAME = 'https://dylancramer.ai';
 const app = express();
 app.use(bodyParser.json());
 
@@ -40,9 +40,9 @@ db.run(`CREATE TABLE IF NOT EXISTS comments (
 const commentValidationRules = () => {
   return [
     body('title').trim().escape().isLength({ min: 3 }),
-    body('name', 'Please pick a name longer than 3 characters').trim().escape().isLength({ min: 3 }),
+    body('name', 'Please pick a name longer than 3 characters').trim().escape(),
     body('comment', 'Please make a comment longer than 5 characters').trim().escape().isLength({ min: 3 }),
-    body('email', 'Please enter a valid email address').normalizeEmail().isEmail(),
+    body('email', 'Please enter a valid email address').normalizeEmail(),
   ]
 }
 
@@ -107,9 +107,14 @@ app.get('/users', (req, res) => {
 // Check if the username is already in the database, if it is, ensure the uid matches the name+email.
 // If it is not, add the user to the database. If the user is already in the database and the uid doesn't match, throw an error.
 app.post('/comments', commentValidationRules(), validate, (req, res) => {
-  const { name, email } = req.body;
+  var { name, email } = req.body;
   const UID = crypto.createHash('md5').update(name + email).digest('hex');
 
+  // check if name is empty, both fields are empty, or only an email is given. in all cases,
+  // add the comment as Anonymous
+  if (name === '') {
+    postComment(req, res, true);
+  } else {
   // check if the name already exists in the database
   db.get("SELECT EXISTS(SELECT 1 FROM users WHERE name = ?) AS result", [name], function(err, row) {
     if (err) {
@@ -122,7 +127,7 @@ app.post('/comments', commentValidationRules(), validate, (req, res) => {
           console.error(err.message);
         } // if the UID matches, add the comment
         else if (row.result === 1) {
-          postComment(req, res);
+          postComment(req, res, false);
         } // username already exists, but UID doesn't match, "authentication" failed!
         else {
           // Send JSON error message
@@ -136,15 +141,19 @@ app.post('/comments', commentValidationRules(), validate, (req, res) => {
           console.error(err.message);
         } 
       });
-      postComment(req, res);
+      postComment(req, res, false);
     }
   });
+  }
 })
 
-const postComment = (req, res) => {
+const postComment = (req, res, anon) => {
   // Generate a hash for a one-time use deletion code
   const randomString = crypto.randomBytes(16).toString('hex');
-  const { title, name, comment } = req.body;
+  var { title, name, comment } = req.body;
+  if (anon) {
+    name = 'Anonymous';
+  }
   db.run("INSERT INTO comments (DELETION_UID, date, title, name, comment) VALUES (?, strftime('%Y-%m-%d %H:%M:%S'), ?, ?, ?)", 
             [randomString, title, name, comment], function(err) {
         if (err) {
