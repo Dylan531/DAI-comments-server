@@ -13,7 +13,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // For test uses only. Not for prod.
-app.use(cors({origin: '*'}));
+//app.use(cors({origin: '*'}));
 
 // Set up rate limiting for flood protection
 app.use(rateLimiter);
@@ -70,7 +70,7 @@ const validate = (req, res, next) => {
 // Get all comments using the title parameter to filter the database
 app.get('/comments', textValidationRules(), validate, (req, res) => {
   const title = req.query.title;
-  db.all('SELECT * FROM comments WHERE title = ?', [title], (err, rows) => {
+  db.all('SELECT id,name,comment,date FROM comments WHERE title = ?', [title], (err, rows) => {
     if (err) {
       res.status(500).send(err);
     } else {
